@@ -11,26 +11,26 @@ import (
 	"github.com/banbanpeppa/itchat-go/service"
 )
 
-type ItchatHandler struct {
+type LoginHandler struct {
 	loginListenerClosed bool
 	loginListener       chan interface{}
 }
 
-type ListenerCallback struct {
+type LoginCallback struct {
 	Message  string
 	LoginMap *model.LoginMap
 	Error    error
 }
 
-func NewWxHandler() *ItchatHandler {
-	return &ItchatHandler{loginListenerClosed: false, loginListener: make(chan interface{})}
+func NewWxHandler() *LoginHandler {
+	return &LoginHandler{loginListenerClosed: false, loginListener: make(chan interface{})}
 }
 
-func (handler *ItchatHandler) LoginListener() <-chan interface{} {
+func (handler *LoginHandler) LoginListener() <-chan interface{} {
 	return handler.loginListener
 }
 
-func (handler *ItchatHandler) LoginDone() {
+func (handler *LoginHandler) LoginDone() {
 	handler.loginListenerClosed = true
 }
 
@@ -53,10 +53,10 @@ func downloadQrcode() (uuid string, err error) {
 在执行了下载二维码的操作之后，进入到登录操作，如果说登录操作一直是失败的话，会进入循环，等待最后的信息
 成功或者失败与否都会将返回内容写入到管道中，通过Listener获取回调信息
 */
-func (handler *ItchatHandler) Login() {
+func (handler *LoginHandler) Login() {
 	go func() {
 		uuid, err := downloadQrcode()
-		callback := ListenerCallback{}
+		callback := LoginCallback{}
 		if err != nil {
 			callback.Error = err
 			callback.LoginMap = nil
