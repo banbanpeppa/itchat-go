@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"io/ioutil"
 	"math/rand"
+	"os"
 	"strconv"
 	"time"
 )
@@ -56,4 +57,13 @@ func Load(data interface{}, filename string) error {
 		return err
 	}
 	return nil
+}
+
+func IsDirExist(path string) bool {
+	p, err := os.Stat(path)
+	if err != nil {
+		return os.IsExist(err)
+	} else {
+		return p.IsDir()
+	}
 }

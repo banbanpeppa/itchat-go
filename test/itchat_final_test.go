@@ -16,7 +16,7 @@ import (
 )
 
 func TestLoginAndStoreInfo(t *testing.T) {
-	handler := wx.NewWxHandler()
+	handler := wx.NewLoginHandler()
 	handler.Login()
 	for obj := range handler.LoginListener() {
 		switch obj.(type) {
@@ -106,4 +106,51 @@ func TestSendMessage(t *testing.T) {
 	if err != nil {
 		fmt.Println(err)
 	}
+}
+
+func TestGetLoginQrcode(t *testing.T) {
+	handler := wx.NewLoginHandler()
+	url, uuid, err := handler.GenerateUrl()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(url, uuid)
+
+	handler.LoginWithUUID(uuid)
+	callback := wx.LoginCallback{}
+OuterLoop:
+	for obj := range handler.LoginListener() {
+		switch obj.(type) {
+		case wx.LoginCallback:
+			callback = obj.(wx.LoginCallback)
+			if callback.Error == nil && callback.LoginMap != nil {
+				fmt.Println("准备持久化:", callback)
+				//检查并创建临时目录
+				if !util.IsDirExist("wx_cache") {
+					os.Mkdir("wx_cache", 0755)
+					fmt.Println("dir", "wx_cache", "created")
+				}
+				file, err := os.Create("wx_cache/itchat.pkl")
+				if err != nil {
+					fmt.Println(err)
+				}
+				enc := gob.NewEncoder(file)
+				err = enc.Encode(callback)
+				if err != nil {
+					fmt.Println(err)
+				}
+				handler.LoginDone()
+				break OuterLoop
+			} else {
+				fmt.Println(callback.Message)
+				continue
+			}
+		default:
+			fmt.Println(obj)
+		}
+	}
+
+	fmt.Println("Test Done!")
+	itchat := wx.NewItchatHandler(callback.LoginMap)
+	itchat.Heartbeat()
 }
